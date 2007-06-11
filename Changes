@@ -1,5 +1,12 @@
 Revision history for Finance-Bank-Smile
 
+0.03    Fixed:
+          Login problems, documentation.
+        Added:
+          More tests for Kwalitee, POD::Coverage and Perl::Critic
+
+0.02    First version uploaded to CPAN
+
 0.01    Date/time
         First version, released on an unsuspecting world.
 

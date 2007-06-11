@@ -5,32 +5,41 @@ use strict;
 use Carp;
 use WWW::Mechanize;
 use HTML::TableExtract;
-our $VERSION = '0.02';
+use Readonly;
+use Switch;
+our $VERSION = '0.03';
 
-use constant DEBUG => 0;
+Readonly my $DEBUG => 0;
 
 sub check_balance {
-    my ($class, %opts) = @_;
-    croak "Must provide a sort code" unless exists $opts{sortCode};
-    croak "Must provide an account number" unless exists $opts{accountNumber};
-    croak "Must provide a pass number" unless exists $opts{passNumber};
-    croak "Must provide a memorable date" unless exists $opts{memorableDate};
-    croak "Must provide a last school" unless exists $opts{lastSchool};
-    croak "Must provide memorable name" unless exists $opts{memorableName};
-    croak "Must provide birth place" unless exists $opts{birthPlace};
-    croak "Must provide first school" unless exists $opts{firstSchool};
+    my ( $class, %opts ) = @_;
+    if ( !exists $opts{sortCode} ) { croak 'Must provide a sort code' }
+    if ( !exists $opts{accountNumber} ) {
+        croak 'Must provide an account number';
+    }
+    if ( !exists $opts{passNumber} ) { croak 'Must provide a pass number' }
+    if ( !exists $opts{memorableDate} ) {
+        croak 'Must provide a memorable date';
+    }
+    if ( !exists $opts{lastSchool} )    { croak 'Must provide a last school' }
+    if ( !exists $opts{memorableName} ) { croak 'Must provide memorable name' }
+    if ( !exists $opts{birthPlace} )    { croak 'Must provide birth place' }
 
-    my $startPage = "https://welcome22.smile.co.uk/SmileWeb/start.do";
-    my @accounts;
+    if ( !exists $opts{firstSchool} ) { croak 'Must provide first school' }
+
+    my $start_page = 'http://www.smile.co.uk/';
 
     # hackery for https proxy support
     my $https_proxy = $ENV{https_proxy};
-    delete $ENV{https_proxy} if ($https_proxy);
+    if ($https_proxy) { delete $ENV{https_proxy} }
 
-    our $mech = WWW::Mechanize->new( env_proxy => 1 );
-    $mech->get($startPage);
-    if (DEBUG) { $mech->save_content("content1.html") }
+    my $mech = WWW::Mechanize->new( env_proxy => 1 );
+    $mech->get($start_page);
 
+    # click on "bank login"
+    $mech->follow_link( n => 1 );
+
+    _follow_meta_refresh($mech);
     $mech->submit_form(
         form_number => 1,
         fields      => {
@@ -41,103 +50,121 @@ sub check_balance {
     );
 
     # now we have to put in the secret info
-   $mech->save_content("content2.html");
-   if ( $mech->content() =~ /memorabledate/s ) {
-        my ($day, $month, $year) = ($opts{memorableDate} =~ m!^(\d\d)/(\d\d)/(\d{4})!);
-        if (DEBUG) { print "memorable date\n" }
-        $mech->submit_form(
-            form_number => 1,
-            fields      => {
-                memorableDay   => $day,
-                memorableMonth => $month,
-                memorableYear  => $year,
-            }
-        );
-    }
-    elsif ( $mech->content() =~ /lastschool/s ) {
-        if (DEBUG) { print "last school\n" }
-        $mech->submit_form(
-          form_number => 1,
-          fields => {
-            lastSchool => $opts{lastSchool},
-          }
-        );
-    }
-    elsif ( $mech->content() =~ /memorableName/s ) {
-        if (DEBUG) { print "memorable name\n" }
-        $mech->submit_form(
-          form_number => 1,
-          fields => {
-            memorableName => $opts{memorableName},
-          }
-         );
-    }
-    elsif ( $mech->content() =~ /birthPlace/s ) {
-        if (DEBUG) { print "birth place\n" }
-        $mech->submit_form(
-          form_number => 1,
-          fields => {
-            birthPlace => $opts{birthPlace},
-          }
-         );
-    }
-    elsif ( $mech->content() =~ /firstSchool/s ) {
-        if (DEBUG) { print "first school\n" }
-        $mech->submit_form(
-          form_number => 1,
-          fields => {
-            firstSchool => $opts{firstSchool},
-          }
-         );
-    }
-    else {
-        if (DEBUG) {
-            print "New one on me...";
+    my $content = $mech->content();
+    switch ($content) {
+        case /memorabledate/ {
+            my ( $day, $month, $year ) =
+              ( $opts{memorableDate} =~ m!^(\d\d)/(\d\d)/(\d{4})!mx );
+            if ($DEBUG) { print "memorable date\n" }
+            $mech->submit_form(
+                form_number => 1,
+                fields      => {
+                    memorableDay   => $day,
+                    memorableMonth => $month,
+                    memorableYear  => $year,
+                }
+            );
         }
-    }
+        case /lastSchool/ {
+            if ($DEBUG) { print "last school\n" }
+            $mech->submit_form(
+                form_number => 1,
+                fields      => {
+                    lastSchool => $opts{lastSchool},
+                }
+            );
+        }
+        case /memorableName/ {
+            if ($DEBUG) { print "memorable name\n" }
+            $mech->submit_form(
+                form_number => 1,
+                fields      => {
+                    memorableName => $opts{memorableName},
+                }
+            );
+        }
+        case /birthPlace/ {
+            if ($DEBUG) { print "birth place\n" }
+            $mech->submit_form(
+                form_number => 1,
+                fields      => {
+                    birthPlace => $opts{birthPlace},
+                }
+            );
+        }
+        case /firstSchool/ {
+            if ($DEBUG) { print "first school\n" }
+            $mech->submit_form(
+                form_number => 1,
+                fields      => {
+                    firstSchool => $opts{firstSchool},
+                }
+            );
+        }
+        else {
+            croak 'Unknown secret information. Cannot logon.';
+        }
+    };
 
     # Click past the Smile noticeboard if it appears
-    if ( $mech->content() =~ /smile noticeboard/s ) {
-      if (DEBUG) { $mech->save_content("content3.html") }
-      $mech->click();
+    if ( $mech->content() =~ /smile noticeboard/msx ) {
+        $mech->click();
     }
 
-    if (DEBUG) { $mech->save_content("content4.html") }
-    my $te = HTML::TableExtract->new(depth=>3, count=>1);
-    $te->parse_file("content4.html");
+    my $te = HTML::TableExtract->new( depth => 3, count => 1 );
+    $te->parse( $mech->content() );
 
     # 0,0 = account type (current account)
     # 0,1 = amount in account (£111.11+)
     # 0,2 = sort code and account number
     # 0,3 = upgrade to smile more?
-    foreach my $row (0..6){
-        if (stripWhiteSpace($te->first_table_found->cell($row,1)) =~ /[0-9]/){
-            push @accounts,{
-                            account => stripWhiteSpace($te->first_table_found->cell($row,0)),
-                            balance => stripWhiteSpace($te->first_table_found->cell($row,1)),
-                           };
-        };
-    };
-    @accounts;
+    my @accounts;
+    foreach my $row ( 0 .. 6 ) {
+        if ( _strip_white_space( $te->first_table_found->cell( $row, 1 ) ) =~
+            /[0-9]/mx )
+        {
+            (my $balance, my $positive) = (_strip_white_space( $te->first_table_found->cell( $row, 1 )) =~ /(\d+\.\d+)(.+)/mx);
+            if (! $positive =~ /\+/mx) {$balance = -$balance}
+            push @accounts,
+              {
+                account =>
+                  _strip_white_space( $te->first_table_found->cell( $row, 0 ) ),
+                balance => $balance,
+              };
+        }
+    }
+    return @accounts;
 }
 
-sub stripWhiteSpace{
-  my $arg = shift;
-  $arg =~ s/^\s+//;
-  $arg =~ s/\s+$//;
-  $arg;
+sub _follow_meta_refresh{
+  my $mech = shift;
+    if ( $mech->response and my $refresh = $mech->response->header('Refresh') )
+    {
+        my ( $delay, $uri ) = split /;url=/imx, $refresh;
+        $uri ||= $mech->uri;    # No URL; reload current URL.
+        sleep $delay;
+        $mech->get($uri);
+    }
+   return;
 };
+
+sub _strip_white_space {
+    my $arg = shift;
+    $arg =~ s/^\s+//mx;
+    $arg =~ s/\s+$//mx;
+    return $arg;
+}
+
 1;
 __END__
+
 =head1 NAME
 
 Finance::Bank::Smile - Check your Smile bank accounts from Perl
 
 =head1 VERSION
 
-Version 0.01
-
-=cut
+Version 0.03
 
 =head1 SYNOPSIS
 
@@ -167,6 +194,7 @@ work. C<WWW::Mechanize> and C<HTML::TableExtract> are required.
 
 =head1 CLASS METHODS
 
+=head2 check_balance
   check_balance(
       sortCode      => 'xxxxxx',
       accountNumber => 'xxxxxxxx',
