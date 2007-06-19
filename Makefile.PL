@@ -12,6 +12,7 @@ WriteMakefile(
         'Test::More' => 0,
         'WWW::Mechanize' => 0,
         'HTML::TableExtract' =>0,
+        'Readonly' => 0,
     },
     dist                => { COMPRESS => 'gzip -9f', SUFFIX => 'gz', },
     clean               => { FILES => 'Finance-Bank-Smile-*' },

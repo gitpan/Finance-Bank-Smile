@@ -7,7 +7,7 @@ use WWW::Mechanize;
 use HTML::TableExtract;
 use Readonly;
 use Switch;
-our $VERSION = '0.03';
+our $VERSION = '0.04';
 
 Readonly my $DEBUG => 0;
 
@@ -168,7 +168,7 @@ Version 0.03
 
 =head1 SYNOPSIS
 
-use Finance::Bank::Smile;
+  use Finance::Bank::Smile;
   my @accounts = Finance::Bank::Smile->check_balance(
       sortCode      => 'xxxxxx',
       accountNumber => 'xxxxxxxx',
@@ -210,7 +210,7 @@ work. C<WWW::Mechanize> and C<HTML::TableExtract> are required.
 
 =head1 AUTHOR
 
-Richard Panman, C<< <panman.r@gmail.com> >>
+Richard Panman, C<< <rpanman@cpan.org> >>
 
 =head1 WARNINGS
 

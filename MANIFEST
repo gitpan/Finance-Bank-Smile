@@ -4,9 +4,9 @@ lib/Finance/Bank/Smile.pm
 Makefile.PL
 MANIFEST
 README
-t/00-load.t
-t/01-pod-coverage.t
+t/00-distribution.t
 t/01-pod.t
+t/01-pod-coverage.t
 t/999-critic.t
 t/999-kwalitee.t
 META.yml                                 Module meta-data (added by MakeMaker)

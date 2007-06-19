@@ -1,5 +1,11 @@
 Revision history for Finance-Bank-Smile
 
+0.04    Fixed:
+          Test::Perl::Critic tests skipped if module not available
+        Added:
+          Test::Distribution to make sure that all used libraries
+          are included (oops!) + a few other tests 
+
 0.03    Fixed:
           Login problems, documentation.
         Added:
