@@ -4,6 +4,7 @@ lib/Finance/Bank/Smile.pm
 Makefile.PL
 MANIFEST
 README
+examples/basic.pl
 t/00-distribution.t
 t/01-pod.t
 t/01-pod-coverage.t

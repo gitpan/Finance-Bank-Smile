@@ -7,7 +7,7 @@ use WWW::Mechanize;
 use HTML::TableExtract;
 use Readonly;
 use Switch;
-our $VERSION = '0.04';
+our $VERSION = '0.05';
 
 Readonly my $DEBUG => 0;
 
@@ -164,7 +164,7 @@ Finance::Bank::Smile - Check your Smile bank accounts from Perl
 
 =head1 VERSION
 
-Version 0.03
+Version 0.05
 
 =head1 SYNOPSIS
 
